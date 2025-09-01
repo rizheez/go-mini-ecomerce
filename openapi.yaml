@@ -1,0 +1,1172 @@
+openapi: 3.0.3
+info:
+  title: Mini E-Commerce API
+  description: |
+    Comprehensive API specification for a mini e-commerce platform built with Go Fiber.
+
+    ## Features
+    - User authentication and authorization
+    - Product catalog management
+    - Shopping cart functionality
+    - Order processing
+    - Payment handling (Credit Card & Cash)
+    - User address management
+    - Admin panel capabilities
+
+    ## Authentication
+    This API uses JWT (JSON Web Tokens) for authentication. Include the token in the Authorization header:
+    ```
+    Authorization: Bearer <jwt_token>
+    ```
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@ecommerce.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Development server
+  - url: https://api.ecommerce.com/v1
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+paths:
+  # Authentication Endpoints
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user
+      description: Create a new user account with email and password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user and receive access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: User logout
+      description: Invalidate user token
+      responses:
+        "200":
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # User Management Endpoints
+  /users/profile:
+    get:
+      tags:
+        - Users
+      summary: Get current user profile
+      description: Retrieve the authenticated user's profile information
+      responses:
+        "200":
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    put:
+      tags:
+        - Users
+      summary: Update user profile
+      description: Update the authenticated user's profile information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileRequest"
+      responses:
+        "200":
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /users/addresses:
+    get:
+      tags:
+        - Users
+      summary: Get user addresses
+      description: Retrieve all addresses for the authenticated user
+      responses:
+        "200":
+          description: Addresses retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Address"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    post:
+      tags:
+        - Users
+      summary: Add new address
+      description: Add a new shipping address for the authenticated user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAddressRequest"
+      responses:
+        "201":
+          description: Address created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Address"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # Categories
+  /categories:
+    get:
+      tags:
+        - Categories
+      summary: Get all categories
+      description: Retrieve all product categories with pagination
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: Categories retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/CategoryListResponse"
+
+    post:
+      tags:
+        - Categories
+      summary: Create new category
+      description: Create a new product category (Admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCategoryRequest"
+      responses:
+        "201":
+          description: Category created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Category"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  # Products
+  /products:
+    get:
+      tags:
+        - Products
+      summary: Get all products
+      description: Retrieve all products with filtering, search, and pagination
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - name: category_id
+          in: query
+          schema:
+            type: integer
+          description: Filter by category ID
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search in product name and description
+        - name: min_price
+          in: query
+          schema:
+            type: number
+            format: float
+          description: Minimum price filter
+        - name: max_price
+          in: query
+          schema:
+            type: number
+            format: float
+          description: Maximum price filter
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [name, price, created_at]
+          description: Sort by field
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+          description: Sort order
+      responses:
+        "200":
+          description: Products retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/ProductListResponse"
+
+  # Cart
+  /cart:
+    get:
+      tags:
+        - Cart
+      summary: Get user's cart
+      description: Retrieve the current user's shopping cart
+      responses:
+        "200":
+          description: Cart retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Cart"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /cart/items:
+    post:
+      tags:
+        - Cart
+      summary: Add item to cart
+      description: Add a product to the shopping cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddToCartRequest"
+      responses:
+        "201":
+          description: Item added to cart successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/CartItem"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # Orders
+  /orders:
+    get:
+      tags:
+        - Orders
+      summary: Get user orders
+      description: Retrieve all orders for the authenticated user
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/OrderStatus"
+          description: Filter by order status
+      responses:
+        "200":
+          description: Orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/OrderListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    post:
+      tags:
+        - Orders
+      summary: Create new order
+      description: Create a new order from the user's cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderRequest"
+      responses:
+        "201":
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/OrderDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # Payments
+  /payments/process:
+    post:
+      tags:
+        - Payments
+      summary: Process payment
+      description: Process payment for an order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/CreditCardPaymentRequest"
+                - $ref: "#/components/schemas/CashPaymentRequest"
+              discriminator:
+                propertyName: payment_method
+      responses:
+        "200":
+          description: Payment processed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Payment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: Page number for pagination
+
+    LimitParam:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+      description: Number of items per page
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    Forbidden:
+      description: Access forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  schemas:
+    # Base Response Schemas
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation completed successfully"
+      required:
+        - success
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "An error occurred"
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+      required:
+        - success
+        - message
+
+    Pagination:
+      type: object
+      properties:
+        current_page:
+          type: integer
+          example: 1
+        total_pages:
+          type: integer
+          example: 10
+        total_items:
+          type: integer
+          example: 95
+        per_page:
+          type: integer
+          example: 10
+      required:
+        - current_page
+        - total_pages
+        - total_items
+        - per_page
+
+    # Authentication Schemas
+    RegisterRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        password:
+          type: string
+          minLength: 8
+          example: "password123"
+        name:
+          type: string
+          example: "John Doe"
+        phone:
+          type: string
+          example: "+1234567890"
+        role:
+          type: string
+          enum: [customer, admin]
+          default: customer
+          example: "customer"
+      required:
+        - email
+        - password
+        - name
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        password:
+          type: string
+          example: "password123"
+      required:
+        - email
+        - password
+
+    AuthResponse:
+      allOf:
+        - $ref: "#/components/schemas/SuccessResponse"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                user:
+                  $ref: "#/components/schemas/User"
+                token:
+                  type: string
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+              required:
+                - user
+                - token
+
+    # User Schemas
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        name:
+          type: string
+          example: "John Doe"
+        phone:
+          type: string
+          example: "+1234567890"
+        role:
+          type: string
+          enum: [customer, admin]
+          example: "customer"
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-09-01T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-09-01T10:00:00Z"
+      required:
+        - id
+        - email
+        - name
+        - role
+        - created_at
+        - updated_at
+
+    UserProfile:
+      allOf:
+        - $ref: "#/components/schemas/User"
+        - type: object
+          properties:
+            addresses:
+              type: array
+              items:
+                $ref: "#/components/schemas/Address"
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "John Smith"
+        phone:
+          type: string
+          example: "+1234567891"
+
+    # Address Schemas
+    Address:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        label:
+          type: string
+          example: "Home"
+        recipient_name:
+          type: string
+          example: "John Doe"
+        phone:
+          type: string
+          example: "+1234567890"
+        address_line_1:
+          type: string
+          example: "123 Main Street"
+        address_line_2:
+          type: string
+          example: "Apt 4B"
+        city:
+          type: string
+          example: "New York"
+        state:
+          type: string
+          example: "NY"
+        postal_code:
+          type: string
+          example: "10001"
+        country:
+          type: string
+          example: "USA"
+        is_default:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-09-01T10:00:00Z"
+      required:
+        - id
+        - label
+        - recipient_name
+        - phone
+        - address_line_1
+        - city
+        - state
+        - postal_code
+        - country
+
+    CreateAddressRequest:
+      type: object
+      properties:
+        label:
+          type: string
+          example: "Work"
+        recipient_name:
+          type: string
+          example: "John Doe"
+        phone:
+          type: string
+          example: "+1234567890"
+        address_line_1:
+          type: string
+          example: "456 Business Ave"
+        address_line_2:
+          type: string
+          example: "Suite 200"
+        city:
+          type: string
+          example: "New York"
+        state:
+          type: string
+          example: "NY"
+        postal_code:
+          type: string
+          example: "10002"
+        country:
+          type: string
+          example: "USA"
+        is_default:
+          type: boolean
+          example: false
+      required:
+        - label
+        - recipient_name
+        - phone
+        - address_line_1
+        - city
+        - state
+        - postal_code
+        - country
+
+    # Category Schemas
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        name:
+          type: string
+          example: "Electronics"
+        description:
+          type: string
+          example: "Electronic devices and accessories"
+        image_url:
+          type: string
+          example: "https://example.com/electronics.jpg"
+        is_active:
+          type: boolean
+          example: true
+        product_count:
+          type: integer
+          example: 25
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-09-01T10:00:00Z"
+      required:
+        - id
+        - name
+        - is_active
+
+    CategoryListResponse:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/Category"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    CreateCategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Fashion"
+        description:
+          type: string
+          example: "Clothing and accessories"
+        image_url:
+          type: string
+          example: "https://example.com/fashion.jpg"
+      required:
+        - name
+
+    # Product Schemas
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "iPhone 15 Pro"
+        description:
+          type: string
+          example: "Latest iPhone with advanced features"
+        price:
+          type: number
+          format: float
+          example: 999.99
+        stock_quantity:
+          type: integer
+          example: 50
+        category:
+          $ref: "#/components/schemas/Category"
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductImage"
+        is_active:
+          type: boolean
+          example: true
+        rating:
+          type: number
+          format: float
+          example: 4.8
+        review_count:
+          type: integer
+          example: 124
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-09-01T10:00:00Z"
+
+    ProductImage:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        url:
+          type: string
+          example: "https://example.com/iphone-1.jpg"
+        alt_text:
+          type: string
+          example: "iPhone 15 Pro front view"
+        is_primary:
+          type: boolean
+          example: true
+
+    ProductListResponse:
+      type: object
+      properties:
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    # Cart Schemas
+    Cart:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CartItem"
+        total_items:
+          type: integer
+          example: 2
+        total_amount:
+          type: number
+          format: float
+          example: 1999.98
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-09-01T10:00:00Z"
+
+    CartItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        product:
+          $ref: "#/components/schemas/Product"
+        quantity:
+          type: integer
+          example: 2
+        unit_price:
+          type: number
+          format: float
+          example: 999.99
+        total_price:
+          type: number
+          format: float
+          example: 1999.98
+        added_at:
+          type: string
+          format: date-time
+          example: "2025-09-01T10:00:00Z"
+
+    AddToCartRequest:
+      type: object
+      properties:
+        product_id:
+          type: integer
+          example: 1
+        quantity:
+          type: integer
+          example: 2
+      required:
+        - product_id
+        - quantity
+
+    # Order Schemas
+    OrderStatus:
+      type: string
+      enum: [pending, confirmed, processing, shipped, delivered, cancelled, returned]
+      example: "pending"
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "ORD-2025090100001"
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        total_amount:
+          type: number
+          format: float
+          example: 2174.98
+        payment_method:
+          type: string
+          enum: [credit_card, cash]
+          example: "credit_card"
+        payment_status:
+          type: string
+          enum: [pending, completed, failed, refunded, cancelled]
+          example: "pending"
+        item_count:
+          type: integer
+          example: 2
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-09-01T10:00:00Z"
+
+    OrderDetail:
+      allOf:
+        - $ref: "#/components/schemas/Order"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/OrderItem"
+            shipping_address:
+              $ref: "#/components/schemas/Address"
+            subtotal:
+              type: number
+              format: float
+              example: 1999.98
+            shipping_cost:
+              type: number
+              format: float
+              example: 15.00
+            tax_amount:
+              type: number
+              format: float
+              example: 160.00
+
+    OrderItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        product:
+          $ref: "#/components/schemas/Product"
+        quantity:
+          type: integer
+          example: 2
+        unit_price:
+          type: number
+          format: float
+          example: 999.99
+        total_price:
+          type: number
+          format: float
+          example: 1999.98
+
+    OrderListResponse:
+      type: object
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: "#/components/schemas/Order"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    CreateOrderRequest:
+      type: object
+      properties:
+        shipping_address_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        payment_method:
+          type: string
+          enum: [credit_card, cash]
+          example: "credit_card"
+        notes:
+          type: string
+          example: "Please handle with care"
+      required:
+        - shipping_address_id
+        - payment_method
+
+    # Payment Schemas
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "PAY-2025090100001"
+        order_id:
+          type: string
+          example: "ORD-2025090100001"
+        amount:
+          type: number
+          format: float
+          example: 2174.98
+        payment_method:
+          type: string
+          enum: [credit_card, cash]
+          example: "credit_card"
+        status:
+          type: string
+          enum: [pending, completed, failed, refunded, cancelled]
+          example: "completed"
+        transaction_id:
+          type: string
+          example: "TXN123456789"
+        processed_at:
+          type: string
+          format: date-time
+          example: "2025-09-01T10:30:00Z"
+
+    CreditCardPaymentRequest:
+      type: object
+      properties:
+        order_id:
+          type: string
+          example: "ORD-2025090100001"
+        payment_method:
+          type: string
+          enum: [credit_card]
+          example: "credit_card"
+        payment_details:
+          type: object
+          properties:
+            card_number:
+              type: string
+              example: "4111111111111111"
+            expiry_month:
+              type: string
+              example: "12"
+            expiry_year:
+              type: string
+              example: "2025"
+            cvv:
+              type: string
+              example: "123"
+            cardholder_name:
+              type: string
+              example: "John Doe"
+          required:
+            - card_number
+            - expiry_month
+            - expiry_year
+            - cvv
+            - cardholder_name
+      required:
+        - order_id
+        - payment_method
+        - payment_details
+
+    CashPaymentRequest:
+      type: object
+      properties:
+        order_id:
+          type: string
+          example: "ORD-2025090100001"
+        payment_method:
+          type: string
+          enum: [cash]
+          example: "cash"
+        payment_details:
+          type: object
+          properties:
+            note:
+              type: string
+              example: "Cash on delivery"
+      required:
+        - order_id
+        - payment_method
