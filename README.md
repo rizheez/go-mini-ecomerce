@@ -1,219 +1,247 @@
-# 🛒 Mini E-Commerce API
+# E-Commerce API
 
-A comprehensive e-commerce REST API built with Go Fiber, implementing Clean Architecture principles. This API provides complete e-commerce functionality including user management, product catalog, shopping cart, order processing, and payment handling.
+A robust, scalable e-commerce API built with Go following Clean Architecture principles.
 
-## 🚀 Features
+## Table of Contents
 
-- **👤 User Management**
+- [Features](#features)
+- [Architecture](#architecture)
+- [Tech Stack](#tech-stack)
+- [Prerequisites](#prerequisites)
+- [Getting Started](#getting-started)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+  - [Running the Application](#running-the-application)
+- [API Documentation](#api-documentation)
+- [Project Structure](#project-structure)
+- [Database Schema](#database-schema)
+- [Testing](#testing)
+- [Deployment](#deployment)
+- [Contributing](#contributing)
+- [License](#license)
 
-  - User registration and authentication
-  - JWT-based authorization
-  - Role-based access control (Customer/Admin)
-  - User profile management
-  - Multiple shipping addresses
+## Features
 
-- **📦 Product Management**
+- User authentication and authorization (JWT)
+- Product catalog management
+- Shopping cart functionality
+- Order processing
+- Payment integration
+- Category management
+- User address management
+- Admin dashboard
+- Rate limiting
+- Logging and monitoring
+- Docker support
+- Comprehensive API documentation
 
-  - Product CRUD operations
-  - Category management
-  - Product search and filtering
-  - Image management
-  - Stock tracking
+## Architecture
 
-- **🛒 Shopping Cart**
-
-  - Add/remove items
-  - Update quantities
-  - Persistent cart storage
-
-- **📋 Order Management**
-
-  - Order creation and tracking
-  - Order status updates
-  - Order history
-
-- **💳 Payment Processing**
-  - Credit card payments (simulation)
-  - Cash on delivery
-  - Payment tracking
-
-## 🏗️ Architecture
-
-This project follows **Clean Architecture** principles with clear separation of concerns:
+This project follows Clean Architecture principles with a clear separation of concerns:
 
 ```
-├── cmd/api/                 # Application entry point
-├── internal/
-│   ├── domain/             # Business entities and interfaces
-│   ├── usecases/           # Business logic
-│   ├── interfaces/http/    # HTTP handlers, middleware, routes
-│   └── infrastructure/     # Database, external services
-├── pkg/                    # Shared utilities
-├── config/                 # Configuration management
-└── migrations/             # Database migrations
+┌────────────────────────────────────┐
+│              Domain                │
+│  (Entities, Repository Interfaces) │
+├────────────────────────────────────┤
+│             Use Cases              │
+│        (Business Logic)            │
+├────────────────────────────────────┤
+│        Interface Adapters          │
+│  (Handlers, DTOs, Presenters)      │
+├────────────────────────────────────┤
+│           Infrastructure           │
+│  (Database, External Services)     │
+└────────────────────────────────────┘
 ```
 
-## 🛠️ Tech Stack
+For detailed architecture documentation, see [Clean Architecture](docs/development/clean-architecture.md).
 
-- **Framework:** [Fiber v2](https://docs.gofiber.io/) - Fast HTTP framework
-- **Database:** PostgreSQL with [GORM](https://gorm.io/) ORM
-- **Authentication:** JWT tokens
-- **Validation:** [go-playground/validator](https://github.com/go-playground/validator)
-- **Environment:** [godotenv](https://github.com/joho/godotenv)
-- **Testing:** [Testify](https://github.com/stretchr/testify)
+## Tech Stack
 
-## 📋 Prerequisites
+- **Language**: Go 1.21+
+- **Web Framework**: Fiber
+- **Database**: PostgreSQL
+- **ORM**: GORM
+- **Authentication**: JWT
+- **Validation**: Validator
+- **Logging**: Zap
+- **Testing**: Testify, Mock
+- **Containerization**: Docker, Docker Compose
+- **Documentation**: Swagger/OpenAPI
+- **Build Tool**: Make
 
-- Go 1.21 or higher
-- PostgreSQL 12 or higher
-- Git
+## Prerequisites
 
-## 📖 API Documentation
+- Go 1.21+
+- Docker and Docker Compose
+- PostgreSQL 13+ (if running without Docker)
+- Redis 6+ (if running without Docker)
 
-### Base URL
+## Getting Started
 
-```
-http://localhost:3000/api/v1
-```
+### Installation
 
-### Authentication
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/e-commerce-API.git
+   cd e-commerce-API
+   ```
 
-Include JWT token in the Authorization header:
+2. Install dependencies:
+   ```bash
+   go mod download
+   ```
 
-```
-Authorization: Bearer <your_jwt_token>
-```
+### Configuration
 
-### Key Endpoints
+1. Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
 
-#### 🔐 Authentication
+2. Update the `.env` file with your configuration:
+   ```bash
+   # Database
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_USER=ecommerce_user
+   DB_PASSWORD=ecommerce_password
+   DB_NAME=ecommerce_db
+   
+   # JWT
+   JWT_SECRET=your_jwt_secret_key
+   JWT_EXPIRATION_HOURS=24
+   
+   # Server
+   SERVER_PORT=8080
+   ```
 
-- `POST /auth/register` - Register new user
-- `POST /auth/login` - User login
-- `POST /auth/logout` - User logout
+### Running the Application
 
-#### 👤 User Management
-
-- `GET /users/profile` - Get user profile
-- `PUT /users/profile` - Update profile
-- `GET /users/addresses` - Get user addresses
-- `POST /users/addresses` - Add new address
-
-#### 📦 Products
-
-- `GET /products` - Get all products (with search & filters)
-- `GET /products/:id` - Get product details
-- `POST /admin/products` - Create product (Admin only)
-- `PUT /admin/products/:id` - Update product (Admin only)
-
-#### 🛒 Shopping Cart
-
-- `GET /cart` - Get user's cart
-- `POST /cart/items` - Add item to cart
-- `PUT /cart/items/:id` - Update cart item
-- `DELETE /cart/items/:id` - Remove item from cart
-
-#### 📋 Orders
-
-- `GET /orders` - Get user orders
-- `POST /orders` - Create new order
-- `GET /orders/:id` - Get order details
-
-#### 💳 Payments
-
-- `POST /payments/process` - Process payment
-
-## 🛡️ Security Features
-
-- **JWT Authentication** with secure token generation
-- **Password Hashing** using bcrypt
-- **Rate Limiting** to prevent abuse
-- **CORS Protection** for web browser security
-- **Input Validation** on all endpoints
-- **SQL Injection Prevention** through GORM ORM
-- **UUID Primary Keys** to prevent enumeration attacks
-
-## 📊 Database Schema
-
-The database uses UUID primary keys and includes the following main entities:
-
-- **users** - User accounts and authentication
-- **user_addresses** - Customer shipping addresses
-- **categories** - Product categories
-- **products** - Product catalog
-- **carts** - Shopping carts
-- **orders** - Customer orders
-- **payments** - Payment transactions
-
-## 🔧 Development Tools
-
-### Live Reload
+#### Option 1: Using Docker (Recommended)
 
 ```bash
-# Install air
-go install github.com/cosmtrek/air@latest
+# Start all services
+docker-compose up -d
 
-# Run with live reload
-air
+# Access the API at http://localhost:8080
 ```
 
-### Database Migrations
+#### Option 2: Local Development
 
 ```bash
-# Create migration
-migrate create -ext sql -dir migrations -seq create_users_table
+# Start database and Redis
+docker-compose up -d db redis
 
-# Run migrations
-migrate -path migrations -database "postgres://user:pass@localhost/dbname?sslmode=disable" up
+# Run the application
+go run cmd/api/main.go
 ```
 
-### Code Quality
+#### Option 3: Using Makefile
 
 ```bash
-# Format code
-go fmt ./...
+# Install air for hot reloading (first time only)
+make install-air
 
-# Lint code
-golangci-lint run
-
-# Security check
-gosec ./...
+# Run with hot reloading
+make run-dev
 ```
 
-## 📁 Project Structure
+## API Documentation
+
+API documentation is available in multiple formats:
+
+- [API Structure](docs/api/structure.md)
+- [Endpoints Documentation](docs/api/README.md)
+- Swagger/OpenAPI documentation (available at `/swagger` when running)
+
+## Project Structure
 
 ```
-mini-ecommerce/
-├── cmd/api/                    # Application entrypoint
-├── config/                     # Configuration management
-├── internal/
-│   ├── domain/
-│   │   ├── entities/          # Business entities
-│   │   └── repositories/      # Repository interfaces
-│   ├── usecases/              # Business logic
-│   ├── interfaces/http/
-│   │   ├── handlers/          # HTTP handlers
-│   │   ├── middleware/        # HTTP middleware
-│   │   ├── routes/            # Route definitions
-│   │   └── dto/               # Data transfer objects
-│   └── infrastructure/
-│       ├── database/          # Database implementations
-│       ├── auth/              # Authentication services
-│       └── payment/           # Payment services
-├── pkg/                       # Shared utilities
-├── migrations/                # Database migrations
-├── docs/                      # Documentation
-├── scripts/                   # Build and deployment scripts
-├── .env.example               # Environment variables template
-├── .air.toml                  # Live reload configuration
-├── docker-compose.yml         # Docker development setup
-├── Dockerfile                 # Production Docker image
-└── README.md                  # This file
+e-commerce-API/
+├── cmd/
+│   └── api/              # Application entry point
+├── config/               # Configuration files
+├── internal/             # Internal application code
+│   ├── domain/           # Domain entities and repositories
+│   ├── usecases/         # Business logic
+│   ├── interfaces/       # HTTP handlers, middleware, routes
+│   └── infrastructure/   # Database, external services
+├── pkg/                  # Shared packages
+├── migrations/           # Database migrations
+├── docs/                 # Documentation
+├── scripts/              # Utility scripts
+└── ...
 ```
 
-## 🙏 Acknowledgments
+For detailed project structure, see [Project Structure](docs/development/project-structure.md).
 
-- [Fiber](https://docs.gofiber.io/) - Amazing Go web framework
-- [GORM](https://gorm.io/) - Fantastic Go ORM
-- [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) - Architecture principles
-- Go community for excellent tools and libraries
+## Database Schema
+
+The database schema includes tables for users, products, categories, orders, payments, and more.
+
+For detailed schema documentation, see [Database Schema](docs/development/database.md).
+
+## Testing
+
+Run tests with the following commands:
+
+```bash
+# Run all tests
+make test
+
+# Run tests with coverage
+make test-cover
+
+# Run specific package tests
+go test -v ./internal/usecases/...
+```
+
+For detailed testing documentation, see [Testing Guide](docs/development/testing.md).
+
+## Deployment
+
+### Docker Deployment
+
+```bash
+# Build the Docker image
+docker build -t ecommerce-api .
+
+# Run the container
+docker run -d -p 8080:8080 --env-file .env ecommerce-api
+```
+
+### Docker Compose Deployment
+
+```bash
+# Start all services
+docker-compose up -d
+
+# Scale the application
+docker-compose up -d --scale app=3
+```
+
+For detailed deployment documentation, see [Deployment Guide](docs/deployment/README.md).
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a pull request
+
+For development guidelines, see [Development Guide](docs/development/README.md).
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Additional Documentation
+
+- [Clean Architecture Implementation](docs/development/clean-architecture.md)
+- [Database Migrations](docs/development/migrations.md)
+- [API Structure](docs/api/structure.md)
+- [Deployment Guide](docs/deployment/README.md)
+- [Development Guide](docs/development/README.md)
